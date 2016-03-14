@@ -2,9 +2,9 @@ package boundedbuffer
 
 import scala.reflect.ClassTag
 
-class BoundedBuffer[E](size: Int, default: E)(implicit m: ClassTag[E]) {
+class BoundedBuffer[E](size: Int)(implicit m: ClassTag[E]) {
 
-  val buffer: Array[E] = (1 to size).map(_ => default).toArray
+  val buffer: Array[Option[E]] = new Array(size)
   var head = 0
   var count = 0
 
@@ -15,7 +15,7 @@ class BoundedBuffer[E](size: Int, default: E)(implicit m: ClassTag[E]) {
       while (isFull) {
         lock.wait()
       }
-      buffer((head + count) % size) = e
+      buffer(tail) = Some(e)
       count += 1
       lock.notifyAll()
     }
@@ -26,8 +26,8 @@ class BoundedBuffer[E](size: Int, default: E)(implicit m: ClassTag[E]) {
       while (isEmpty) {
         lock.wait()
       }
-      val toReturn = buffer(head)
-      buffer(head) = default
+      val toReturn = buffer(head).get
+      buffer(head) = None
       head = (head + 1) % size
       count -= 1
       lock.notifyAll()
@@ -35,8 +35,9 @@ class BoundedBuffer[E](size: Int, default: E)(implicit m: ClassTag[E]) {
     }
   }
 
-  def isFull: Boolean = (count == size)
+  def tail: Int = (head + count) % size
+  def isFull: Boolean = count == size
 
-  def isEmpty: Boolean = (count == 0)
+  def isEmpty: Boolean = count == 0
 
 }
