@@ -8,7 +8,7 @@ class BoundedBuffer[E](size: Int, default: E)(implicit m: ClassTag[E]) {
   var head = 0
   var count = 0
 
-  val lock = new Object
+  val lock = new AnyRef
 
   def put(e: E): Unit = {
     lock.synchronized {
@@ -17,9 +17,7 @@ class BoundedBuffer[E](size: Int, default: E)(implicit m: ClassTag[E]) {
       }
       buffer((head + count) % size) = e
       count += 1
-      if (count == 1) {
-        lock.notifyAll()
-      }
+      lock.notifyAll()
     }
   }
 
@@ -32,9 +30,7 @@ class BoundedBuffer[E](size: Int, default: E)(implicit m: ClassTag[E]) {
       buffer(head) = default
       head = (head + 1) % size
       count -= 1
-      if (count == size - 1) {
-        lock.notifyAll()
-      }
+      lock.notifyAll()
       toReturn
     }
   }
