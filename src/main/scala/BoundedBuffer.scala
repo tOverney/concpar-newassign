@@ -1,4 +1,4 @@
-package boundedbuffer
+package main.scala
 
 import scala.reflect.ClassTag
 
