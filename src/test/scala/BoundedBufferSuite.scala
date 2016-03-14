@@ -12,10 +12,17 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class BoundedBufferSuite extends FunSuite {
 
   test("run concurrent update of the buffer") {
-    val queue = new BoundedBuffer[Int](10, 0)
+    val queue = new BoundedBuffer[Int](10)
     val counter = new AtomicInteger(0)
-    val numberProduce = 3
+    val numberProduce = 10
     val taskSize = 10
+
+    val consumer = Future {
+      while(true) {
+        val elem = queue.take()
+        counter.getAndAdd(elem)
+      }
+    }
 
     val producers = for (i <- 1 to numberProduce) yield Future {
       for (j <- 0 until taskSize) {
@@ -23,11 +30,6 @@ class BoundedBufferSuite extends FunSuite {
       }
     }
 
-    val consumer = Future {
-      while(true) {
-        counter.getAndAdd(queue.take())
-      }
-    }
     for (future <- producers) {
       Await.ready(future, 100 seconds)
     }
