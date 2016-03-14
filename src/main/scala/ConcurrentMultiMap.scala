@@ -1,4 +1,4 @@
-package boundedbuffer
+package main.scala
 
 import scala.collection.mutable
 import java.util.concurrent.locks.ReentrantReadWriteLock

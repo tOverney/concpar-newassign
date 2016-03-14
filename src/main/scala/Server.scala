@@ -25,8 +25,10 @@ object Server extends App {
 
   while(true) {
     val client = socket.accept();
+    var clientId = 0
     Future{
-      new TCPReader(cid++, client, buffer).read()
+      new TCPReader(clientId, client, buffer).read()
     }(threadPool)
+    clientId += 1
   }
 }
