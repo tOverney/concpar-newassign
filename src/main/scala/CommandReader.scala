@@ -10,21 +10,23 @@ class CommandReader(inStream: InputStream, client: Client) {
   def fetchCommand(): Command = {
     val line = inputBuffer.readLine()
     try {
-      if (line == null) {
+      if (line == null || line.startsWith("leave")) {
         EndOfClient(client)
       }
       else {
         val parts = line.split(" \\'")
         val Array(command, topic) = parts(0).split(" ")
+
         command match {
           case "subscribe"   => Subscribe(topic, client)
           case "unsubscribe" => Unsubscribe(topic, client)
 
           case "publish" => 
             var message = parts(1)
-            while(!message.endsWith("\\'")) {
+            while(!message.endsWith("\'")) {
               message += "\n" + inputBuffer.readLine()
             }
+            message = message.dropRight(1)
             Publish(topic, message, client)
         }
       }

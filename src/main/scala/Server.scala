@@ -22,13 +22,13 @@ object Server extends App {
   }
   val threadPool = Executors.newFixedThreadPool(maxWorkers)
 
-
+  var clientId = 0
   while(true) {
     val client = socket.accept();
-    var clientId = 0
+    val cid = clientId
+    clientId += 1
     Future{
       new TCPReader(clientId, client, buffer).read()
     }(threadPool)
-    clientId += 1
   }
 }
