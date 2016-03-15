@@ -1,4 +1,4 @@
-package boundedbuffer
+package main.scala
 
 import scala.collection.mutable
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -32,6 +32,7 @@ class ConcurrentMultiMap[K,V] {
     try {
       lockRW.readLock().lock()
       val v = map.get(key)
+      println(v)
       v
     } finally {
       lockRW.readLock().unlock()

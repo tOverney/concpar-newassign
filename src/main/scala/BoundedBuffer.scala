@@ -1,8 +1,9 @@
-package boundedbuffer
+package main.scala
 
 import scala.reflect.ClassTag
 
 class BoundedBuffer[E](size: Int)(implicit m: ClassTag[E]) {
+  require(size > 0)
 
   val buffer: Array[Option[E]] = new Array(size)
   var head = 0
