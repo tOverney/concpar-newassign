@@ -2,7 +2,7 @@ package main.scala
 
 import java.net.Socket
 
-class TCPReader(id: Int, socket: Socket, buffer: BoundedBuffer[Command]) {
+class TCPReader(id: Int, socket: Socket, buffer: ProducerConsumer[Command]) {
   val client = new Client(socket, id)
   val reader = new CommandReader(socket.getInputStream(), client)
 

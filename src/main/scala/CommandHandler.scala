@@ -1,6 +1,6 @@
 package main.scala
 
-class CommandHandler(buffer: BoundedBuffer[Command]) {
+class CommandHandler(buffer: ProducerConsumer[Command]) {
   import CommandHandler._
   
   def handle(): Unit = {

@@ -12,8 +12,8 @@ import java.util.concurrent.Executors
 @RunWith(classOf[JUnitRunner])
 class BoundedBufferSuite extends FunSuite {
 
-  test("run concurrent update of the buffer") {
-    val queue = new BoundedBuffer[Int](10) with IntegerIndices
+/*  test("run concurrent update of the buffer") {
+    val queue = new ProducerConsumer[Int](10) with IntegerIndices
     val counter = new AtomicInteger(0)
     val numberProduce = 10 //TODO: correctly close the threads if too many are spawned
     val taskSize = 10
@@ -37,25 +37,49 @@ class BoundedBufferSuite extends FunSuite {
     }
     Thread.sleep(1000)
     assert(counter.get == (1 to numberProduce).sum * taskSize)
-  }
-  
-  trait DelayedThreadExecutionBuffer[T] extends BoundedBuffer[T] {
-    override def createBuffer(_size: Int) = new InternalBuffer[T] {
-      private val buffer: Array[Option[T]] = new Array(_size)
-      def update(index: Int, elem: T): Unit = buffer(index) = Some(elem)
-      def apply(index: Int): T = buffer(index).get
-      def delete(index: Int): Unit = buffer(index) = None
-      val size = _size
-    }
-    def head_=(i: Int) = ???
-    def head: Int = ???
-    def count_=(i: Int) = ???
-    def count: Int = ???
-  }
+  }*/
 
-  
-  test("Works with different interleavings") {
-    val queue = 0
-  
+  import BoundedBufferSuiteHelper._
+  test("Should work with one producer, one consumer and a buffer of size 1") {
+    val prod = 1
+    val cons = 2
+    val firstSchedule = (1 to scheduleLength).flatMap(_ => List(prod, cons)).toList
+    firstSchedule.permutations.take(noOfSchedules).foreach { schedule =>
+      //println("Exploring Sched: "+schedule)
+      val sched = new Scheduler(schedule)      
+      val prodCons = new SchedProducerConsumer[Int](1, sched)
+      val ops = List(() => prodCons.putWrong1(1), () => prodCons.takeWrong1())
+      sched.runInParallel(ops)
+    }        
   }
+  
+  test("Should work with 2 producers, one consumer and a buffer of size 1") {    
+    val firstSchedule = (1 to scheduleLength).flatMap(_ => List(1, 2, 3)).toList
+    firstSchedule.permutations.take(noOfSchedules).foreach { schedule =>
+      //println("Exploring Sched: "+schedule)
+      val sched = new Scheduler(schedule)      
+      val prodCons = new SchedProducerConsumer[Int](1, sched)
+      val ops = List(() => prodCons.putWrong1(1), () => prodCons.putWrong1(2), () => prodCons.takeWrong1())
+      sched.runInParallel(ops)
+    }        
+  }
+  
+  test("Should work with 3 producers, 2 consumer and a buffer of size 1") {    
+    val firstSchedule = (1 to scheduleLength).flatMap(_ => List(1, 2, 3, 4, 5)).toList
+    firstSchedule.permutations.take(10000).foreach { schedule =>
+      println("Exploring Sched: "+schedule)
+      val sched = new Scheduler(schedule)      
+      val prodCons = new SchedProducerConsumer[Int](1, sched)
+      val ops = List(() => prodCons.putWrong1(1), () => prodCons.putWrong1(2), () => prodCons.putWrong1(3), 
+          () => prodCons.takeWrong1(), () => prodCons.takeWrong1())
+      /*val ops = List(() => prodCons.put(1), () => prodCons.put(2), () => prodCons.put(3),
+        () => prodCons.take(), () => prodCons.take())*/
+      sched.runInParallel(ops)
+    }        
+  }
+}
+
+object BoundedBufferSuiteHelper {
+  val noOfSchedules = 10000  
+  val scheduleLength = 10 // maximum number of read/writes possible in student's code    
 }

@@ -7,14 +7,14 @@ trait InternalBuffer[T] {
   val size: Int
 }
 
-trait IntegerIndices { self: BoundedBuffer[_] =>
+trait IntegerIndices { self: ProducerConsumer[_] =>
   var head: Int = 0
   var count: Int = 0
 }
 
-abstract class BoundedBuffer[T](size: Int) { self =>
+abstract class ProducerConsumer[T](size: Int) { self =>
   require(size > 0)
-  
+
   def createBuffer(_size: Int) = new InternalBuffer[T] {
     private val buffer: Array[Option[T]] = new Array(_size)
     def update(index: Int, elem: T): Unit = buffer(index) = Some(elem)
@@ -30,41 +30,33 @@ abstract class BoundedBuffer[T](size: Int) { self =>
   def head_=(e: Int): Unit
   def count: Int
   def count_=(e: Int): Unit
-  head = 0
-  count = 0
+
+  /*def init() {
+    head = 0
+    count = 0
+  }*/
 
   val lock = new AnyRef
-  
+
   def putWrong1(e: T): Unit = {
-      while (isFull) {
-        Thread.sleep(1)
-      }
-      buffer(tail) = e
-      count += 1
+    while (isFull) {      
+    }
+    buffer(tail) = e
+    count += 1
   }
-  
+
   def takeWrong1(): T = {
-      while (isEmpty) {
-        Thread.sleep(1)
-      }
-      val toReturn = buffer(head)
-      buffer.delete(head)
-      head = (head + 1) % size
-      count -= 1
-      toReturn
+    while (isEmpty) {      
+    }
+    val toReturn = buffer(head)
+    buffer.delete(head)
+    head = (head + 1) % size
+    count -= 1
+    toReturn
   }
   
-  def putWrong2(e: T): Unit = {
-    while (isFull) {
-    Thread.sleep(1)
-    }
-    lock.synchronized {
-      buffer(tail) = e
-      count += 1
-    }
-  }
-  
-  def takeWrong2(): T = {
+
+  /*def takeWrong2(): T = {
     while (isEmpty) {
       Thread.sleep(1)
     }
@@ -76,7 +68,7 @@ abstract class BoundedBuffer[T](size: Int) { self =>
       toReturn
     }
   }
-  
+
   def putWrong3(e: T): Unit = {
     lock.synchronized {
       while (isFull) {
@@ -86,7 +78,7 @@ abstract class BoundedBuffer[T](size: Int) { self =>
       count += 1
     }
   }
-  
+
   def takeWrong3(): T = {
     lock.synchronized {
       while (isEmpty) {
@@ -98,7 +90,7 @@ abstract class BoundedBuffer[T](size: Int) { self =>
       count -= 1
       toReturn
     }
-  }
+  }*/
 
   // Correct versions.
   def put(e: T): Unit = {
