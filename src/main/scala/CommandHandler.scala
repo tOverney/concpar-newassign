@@ -22,7 +22,7 @@ class CommandHandler(buffer: BoundedBuffer[Command]) {
         } client.sendMessage(topic, message)
 
       case EndOfClient(client) =>
-        // TODO remove all entries of that client from the multiMap
+        multiMap.removeValueFromAll(client)
 
       case _ =>
         // nothing should happen
