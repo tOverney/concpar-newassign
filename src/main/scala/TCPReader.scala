@@ -17,6 +17,7 @@ class TCPReader(id: Int, socket: Socket, buffer: BoundedBuffer[Command]) {
         case _: MalformedCommand =>
           client.invalidPreviousCommand()
         case command =>
+          println(command)
           buffer.put(command)
       }
     }

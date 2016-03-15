@@ -28,6 +28,7 @@ class ConcurrentMultiMap[K,V] {
     try {
       lock.readLock().lock()
       val v = map.get(key)
+      println(v)
       v
     } finally {
       lock.readLock().unlock()
