@@ -33,7 +33,7 @@ class BoundedBufferSuite extends FunSuite {
     }(threadPool)
 
     for (future <- producers) {
-      Await.ready(future, 100 seconds)
+      Await.ready(future, 10 seconds)
     }
     Thread.sleep(1000)
     assert(counter.get == (1 to numberProduce).sum * taskSize)

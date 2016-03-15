@@ -2,6 +2,10 @@ package main.scala
 
 import java.net.ServerSocket
 import java.net.Socket
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.net.URL
+
 import java.util.concurrent.Executors
 import scala.concurrent.JavaConversions._
 import scala.concurrent.Future
@@ -12,6 +16,15 @@ object Server extends App {
   val maxWorkers = 12
   val bufferSize = 20
   val socket = new ServerSocket(port)
+  try {
+    val whatismyip = new URL("http://checkip.amazonaws.com")
+    val in = new BufferedReader(new InputStreamReader(whatismyip.openStream()));
+    val serverIP = in.readLine()
+    println(s"Connect to $serverIP (or `localhost`), port $port with `telnet` to join this server")
+  catch (e: Exception) {
+    println("There is a problem with your internet connection, you can only access it via localhost")
+  }
+
   val buffer = new BoundedBuffer[Command](20)
   val commandHandlers = for{
     i <- 0 until maxWorkers

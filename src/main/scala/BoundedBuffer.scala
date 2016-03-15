@@ -1,8 +1,6 @@
 package main.scala
 
-import scala.reflect.ClassTag
-
-class BoundedBuffer[E](size: Int)(implicit m: ClassTag[E]) {
+class BoundedBuffer[E](size: Int) {
   require(size > 0)
 
   val buffer: Array[Option[E]] = new Array(size)
@@ -12,26 +10,26 @@ class BoundedBuffer[E](size: Int)(implicit m: ClassTag[E]) {
   val lock = new AnyRef
 
   def put(e: E): Unit = {
-    lock.synchronized {
+    this.synchronized {
       while (isFull) {
-        lock.wait()
+        this.wait()
       }
       buffer(tail) = Some(e)
       count += 1
-      lock.notifyAll()
+      this.notifyAll()
     }
   }
 
   def take(): E = {
-    lock.synchronized {
+    this.synchronized {
       while (isEmpty) {
-        lock.wait()
+        this.wait()
       }
       val toReturn = buffer(head).get
       buffer(head) = None
       head = (head + 1) % size
       count -= 1
-      lock.notifyAll()
+      this.notifyAll()
       toReturn
     }
   }
