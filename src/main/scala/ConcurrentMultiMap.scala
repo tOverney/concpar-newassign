@@ -5,12 +5,16 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 
 class ConcurrentMultiMap[K,V] {
 
-  val lock = new ReentrantReadWriteLock()
+  private val lockRW = new ReentrantReadWriteLock()
   val map = mutable.HashMap[K, Set[V]]()
+
+  def lock(): Unit = lockRW.writeLock().lock()
+
+  def unlock(): Unit = lockRW.writeLock().unlock()
 
   def add(key: K, value: V): Unit = {
     try {
-      lock.writeLock().lock()
+      lockRW.writeLock().lock()
       map.get(key) match {
         case Some(set) =>
           if (! set.contains(value)) {
@@ -20,23 +24,23 @@ class ConcurrentMultiMap[K,V] {
           map += ((key, Set(value)))
       }
     } finally {
-      lock.writeLock().unlock()
+      lockRW.writeLock().unlock()
     }
   }
 
   def get(key: K): Option[Set[V]] = {
     try {
-      lock.readLock().lock()
+      lockRW.readLock().lock()
       val v = map.get(key)
       v
     } finally {
-      lock.readLock().unlock()
+      lockRW.readLock().unlock()
     }
   }
 
   def remove(key: K, value: V): Unit = {
     try {
-      lock.writeLock().lock()
+      lockRW.writeLock().lock()
       map.get(key) match {
         case Some(set) =>
           if (set.contains(value)) {
@@ -45,7 +49,16 @@ class ConcurrentMultiMap[K,V] {
         case None =>
       }
     } finally {
-      lock.writeLock().unlock()
+      lockRW.writeLock().unlock()
+    }
+  }
+
+  def removeValueFromAll(value: V): Unit = {
+    try {
+      lockRW.writeLock().lock()
+      map.keys.foreach(remove(_, value))
+    } finally {
+      lockRW.writeLock().unlock()
     }
   }
 
