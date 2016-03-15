@@ -23,5 +23,5 @@ case class Unsubscribe(topic: String,
 }
 case class Publish(topic: String, message: String,
     from: Client) extends Command(from) with Topic {
-  override def toString(): String = s"${from.name}: Publish @ $topic -> \'$message\'"
+  override def toString(): String = s"${from.name}: Publish @ $topic -> \'$message"
 }

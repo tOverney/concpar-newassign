@@ -9,29 +9,27 @@ class CommandReader(inStream: InputStream, client: Client) {
 
   def fetchCommand(): Command = {
     val line = inputBuffer.readLine()
-    try {
-      if (line == null || line.startsWith("leave")) {
-        EndOfClient(client)
-      }
-      else {
-        val parts = line.split(" \\'")
-        val Array(command, topic) = parts(0).split(" ")
 
-        command match {
-          case "subscribe"   => Subscribe(topic, client)
-          case "unsubscribe" => Unsubscribe(topic, client)
+    if (line == null || line.startsWith("leave")) {
+      EndOfClient(client)
+    }
+    else {
+      val (command :: payload) = line.split(" \\'").toList
+      val parts = (command.split(" ") ++ payload).toList
 
-          case "publish" => 
-            var message = parts(1)
-            while(!message.endsWith("\'")) {
-              message += "\n" + inputBuffer.readLine()
-            }
-            message = message.dropRight(1)
-            Publish(topic, message, client)
-        }
+      parts match {
+        case "subscribe" :: topic :: Nil   => Subscribe(topic, client)
+        case "unsubscribe" :: topic :: Nil => Unsubscribe(topic, client)
+
+        case "publish" :: topic :: msg :: Nil => 
+          var message = s"'$msg"
+          while(!message.endsWith("\'")) {
+            message += "\n" + inputBuffer.readLine()
+          }
+          Publish(topic, message, client)
+
+        case _ => MalformedCommand(client)
       }
-    } catch {
-      case e: Exception => MalformedCommand(client)
     }
   }
 }
