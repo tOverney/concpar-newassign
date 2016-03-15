@@ -26,5 +26,5 @@ case class Client(socket: Socket, id: Int)
   def invalidPreviousCommand(): Unit = send("! previous command was invalid\n")
 
   def sendMessage(topic: String, message: String): Unit =
-    send(s"$topic \'$message\n")
+    send(s"$topic $message\n")
 }
