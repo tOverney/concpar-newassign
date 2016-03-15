@@ -21,11 +21,12 @@ object Server extends App {
     val in = new BufferedReader(new InputStreamReader(whatismyip.openStream()));
     val serverIP = in.readLine()
     println(s"Connect to $serverIP (or `localhost`), port $port with `telnet` to join this server")
-  catch (e: Exception) {
-    println("There is a problem with your internet connection, you can only access it via localhost")
+  } catch  {
+    case e: Exception =>
+      println("There is a problem with your internet connection, you can only access it via localhost")
   }
 
-  val buffer = new BoundedBuffer[Command](20)
+  val buffer = new BoundedBuffer[Command](20) with IntegerIndices
   val commandHandlers = for{
     i <- 0 until maxWorkers
   } yield {
