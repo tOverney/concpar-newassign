@@ -54,6 +54,12 @@ abstract class ProducerConsumer[T](size: Int) { self =>
     count -= 1
     toReturn
   }
+
+  def putWrong2(e: T): Unit = {
+    while (isFull) { }
+    buffer(tail) = e
+    count += 1
+  }
   
 
   /*def takeWrong2(): T = {

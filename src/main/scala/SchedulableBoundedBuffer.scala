@@ -12,17 +12,18 @@ import scala.collection.mutable._
  */
 class Scheduler(sched: List[Int]) {  
   val iterationBeforeGoingOutOfTurn = 1000000  
-  
+  val maxOps = 10000 // a limit on the maximum number of operations the code is allowed to perform
+    
   private var schedule = sched
   private var realToFakeThreadId = Map[Long, Int]()
-  private val opLog = ListBuffer[String]() // a mutable list (used for efficient concat)  
+  private val opLog = ListBuffer[String]() // a mutable list (used for efficient concat)   
     
   /**
    * Runs a set of operations in parallel as per the schedule.
    * Each operation may consist of many primitive operations like reads or writes
    * to shared data structure each of which should be executed using the function `exec`.
    */
-  def runInParallel[T](ops: List[() => Any]) {
+  def runInParallel(ops: List[() => Any]) {
     // create threads    
     val threads = ops.zipWithIndex.map {
       case (op, i) =>
@@ -30,7 +31,15 @@ class Scheduler(sched: List[Int]) {
           def run() {
             val fakeId = i + 1
             setThreadId(fakeId)
-            op()
+            try {
+              op()
+            } catch {
+              case e: Exception =>
+                println(s"Thread $fakeId threw Exception on the following schedule:")
+                println(opLog.mkString("\n"))
+                println(s"$fakeId: ${e.toString}")
+                Runtime.getRuntime().halt(0) //exit the JVM and all running threads (no other way to kill other threads)                
+            }
             removeFromSchedule(fakeId)
           }
         })
@@ -48,6 +57,8 @@ class Scheduler(sched: List[Int]) {
   def exec[T](primop: => T)(msg: String): T = {
     waitForTurn
     opLog += threadId + ":" + msg
+    if(opLog.size > maxOps)
+      throw new Exception(s"Total number of reads/writes performed by threads exceed $maxOps. A possible deadlock!")
     val res = primop
     advanceSchedule
     res

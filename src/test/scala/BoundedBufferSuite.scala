@@ -8,6 +8,8 @@ import scala.concurrent._
 import scala.concurrent.duration._
 import scala.concurrent.JavaConversions._
 import java.util.concurrent.Executors
+import java.util.Timer
+import java.util.TimerTask
 
 @RunWith(classOf[JUnitRunner])
 class BoundedBufferSuite extends FunSuite {
@@ -56,6 +58,14 @@ class BoundedBufferSuite extends FunSuite {
     })           
   }
   
+  test("Testing a case of deadlock") {    
+    testManySchedules((1 to scheduleLength).flatMap(_ => List(1, 2)).toList, sched => {
+      val prodCons = new SchedProducerConsumer[Int](1, sched)
+      val ops = List(() => prodCons.putWrong2(1), () => prodCons.take())
+      sched.runInParallel(ops)
+    })       
+  }
+  
   test("Should work with 3 producers, 2 consumer and a buffer of size 1") {
     testManySchedules((1 to scheduleLength).flatMap(_ => List(1, 2, 3, 4, 5)).toList, sched => {
       val prodCons = new SchedProducerConsumer[Int](1, sched)
@@ -65,24 +75,38 @@ class BoundedBufferSuite extends FunSuite {
         () => prodCons.take(), () => prodCons.take())*/
       sched.runInParallel(ops)
     })           
-  }
+  }  
 }
 
 object TestHelper {
-  val noOfSchedules = 10000  
+  val noOfSharedOps = 10000  
   val scheduleLength = 10 // maximum number of read/writes possible in one thread
+  val testTimeout = 60 // the total time out for a test in seconds
+  val schedTimeout = 10 // the total time out for execution of a schedule in secs
   
   def testManySchedules(firstSched: List[Int], fun: Scheduler => Unit) = {
-    firstSched.permutations.take(noOfSchedules).foreach { schedule =>
-      //println("Exploring Sched: "+schedule)
-      val schedr = new Scheduler(schedule)
-      try {
-        fun(schedr)
-      } catch {
-        case e: Exception =>
-          println("Implementation threw Exception on the following schedule:\n "+schedr.getOperationLog().mkString("\n"))
-          throw e
+    // create a timer thread for timing out    
+    val testTimer = new Timer()
+    testTimer.schedule(new TimerTask {
+      override def run() {                
+        println("Test took too long to complete!")
+        Runtime.getRuntime().halt(0) //exit the JVM and all running threads (no other way to kill other threads)
       }
-    }    
-  }
+    }, testTimeout * 1000)
+    firstSched.permutations.take(noOfSharedOps).foreach { schedule =>
+      val schedr = new Scheduler(schedule)
+      val schedTimer = new Timer()
+      schedTimer.schedule(new TimerTask {
+        override def run() {
+          println("The schedule took too long to complete. A possible deadlock!")
+          println(schedr.getOperationLog().mkString("\n"))
+          Runtime.getRuntime().halt(0) //exit the JVM and all running threads (no other way to kill other threads)
+        }
+      }, schedTimeout * 1000)    
+      //println("Exploring Sched: "+schedule)      
+      fun(schedr)   
+      schedTimer.cancel()
+    }
+    testTimer.cancel()
+  }  
 }
