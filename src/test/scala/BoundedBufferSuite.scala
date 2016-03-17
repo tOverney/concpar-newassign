@@ -42,13 +42,13 @@ class BoundedBufferSuite extends FunSuite {
   }*/   
 
   import TestHelper._
-  /*test("Should work with one producer, one consumer and a buffer of size 1") {    
+  test("Should work with one producer, one consumer and a buffer of size 1") {    
     testManySchedules((1 to scheduleLength).flatMap(_ => List(1, 2)).toList, sched => {
       val prodCons = new SchedProducerConsumer[Int](1, sched)
       val ops = List(() => prodCons.putWrong1(1), () => prodCons.takeWrong1())
       sched.runInParallel(ops)
     })       
-  }*/
+  }
   /*
   test("Should work with 2 producers, one consumer and a buffer of size 1") {
     testManySchedules((1 to scheduleLength).flatMap(_ => List(1, 2, 3)).toList, sched => {
@@ -58,13 +58,13 @@ class BoundedBufferSuite extends FunSuite {
     })           
   }
   */
-  test("Testing a case of deadlock") {    
+  /*test("Testing a case of deadlock") {    
     testManySchedules((1 to scheduleLength).flatMap(_ => List(1, 2)).toList, sched => {
       val prodCons = new SchedProducerConsumer[Int](1, sched)
       val ops = List(() => prodCons.putWrong2(1), () => prodCons.take())
       sched.runInParallel(ops)
     })       
-  }
+  }*/
   
   /*test("Testing a case of deadlock") {    
     val sched =((1 to scheduleLength).map(_ => 2) ++ (1 to scheduleLength).map(_ => 1)).toList

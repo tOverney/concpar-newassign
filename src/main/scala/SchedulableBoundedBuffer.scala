@@ -140,10 +140,10 @@ class Scheduler(sched: List[Int]) {
   /** returns true if the thread can continue to execute, and false otherwise */
   def decide(force: Boolean = false): Boolean = {
     val tid = threadId
-    canContinue match {
-      case Some((i, state)) if i == tid =>
-        //println(s"$tid: Runs !")
-        synchronized {
+    synchronized {
+      canContinue match {
+        case Some((i, state)) if i == tid =>
+      //println(s"$tid: Runs ! Was in state $state")
           waitingForDecision(i) = None // Make sure canContinue will not be recomputed.
           canContinue = None
           state match {
@@ -158,20 +158,18 @@ class Scheduler(sched: List[Int]) {
               updateThreadState(Running(lockToAquire +: locks))
             case VariableReadWrite(locks) => updateThreadState(Running(locks))
           }
-        }
-        true
-      case Some((i, state)) =>
-        //println(s"$tid: not my turn but $i !")
-        false
-      case None =>
-      synchronized {
+          true
+        case Some((i, state)) =>
+          //println(s"$tid: not my turn but $i !")
+          false
+        case None =>
           // If all remaining threads are waiting for a decision.
         if (waitingForDecision.values.forall(_.nonEmpty)) {
     //println(s"$tid: who is going to take a decision? ${waitingForDecision(tid)}")
           // If this thread is the last one to 
           val v = waitingForDecision.toSeq
           val t = threadStates.toSeq
-          if(v.nonEmpty && t.isEmpty) {
+          if(canContinue.nonEmpty) {
             throw new Exception(v + "," + t + " !!!")
           }
           if (waitingForDecision.isEmpty || threadStates.isEmpty) true else
