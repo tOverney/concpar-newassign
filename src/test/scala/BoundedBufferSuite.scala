@@ -42,14 +42,14 @@ class BoundedBufferSuite extends FunSuite {
   }*/   
 
   import TestHelper._
-  test("Should work with one producer, one consumer and a buffer of size 1") {    
+  /*test("Should work with one producer, one consumer and a buffer of size 1") {    
     testManySchedules((1 to scheduleLength).flatMap(_ => List(1, 2)).toList, sched => {
       val prodCons = new SchedProducerConsumer[Int](1, sched)
       val ops = List(() => prodCons.putWrong1(1), () => prodCons.takeWrong1())
       sched.runInParallel(ops)
     })       
-  }
-  
+  }*/
+  /*
   test("Should work with 2 producers, one consumer and a buffer of size 1") {
     testManySchedules((1 to scheduleLength).flatMap(_ => List(1, 2, 3)).toList, sched => {
       val prodCons = new SchedProducerConsumer[Int](1, sched)
@@ -57,7 +57,7 @@ class BoundedBufferSuite extends FunSuite {
       sched.runInParallel(ops)
     })           
   }
-  
+  */
   test("Testing a case of deadlock") {    
     testManySchedules((1 to scheduleLength).flatMap(_ => List(1, 2)).toList, sched => {
       val prodCons = new SchedProducerConsumer[Int](1, sched)
@@ -65,7 +65,7 @@ class BoundedBufferSuite extends FunSuite {
       sched.runInParallel(ops)
     })       
   }
-  
+  /*
   test("Should work with 3 producers, 2 consumer and a buffer of size 1") {
     testManySchedules((1 to scheduleLength).flatMap(_ => List(1, 2, 3, 4, 5)).toList, sched => {
       val prodCons = new SchedProducerConsumer[Int](1, sched)
@@ -75,12 +75,12 @@ class BoundedBufferSuite extends FunSuite {
         () => prodCons.take(), () => prodCons.take())*/
       sched.runInParallel(ops)
     })           
-  }  
+  }  */
 }
 
 object TestHelper {
-  val noOfSharedOps = 10000  
-  val scheduleLength = 10 // maximum number of read/writes possible in one thread
+  val noOfSchedules = 10000  
+  val scheduleLength = 20 // maximum number of read/writes possible in one thread
   val testTimeout = 60 // the total time out for a test in seconds
   val schedTimeout = 10 // the total time out for execution of a schedule in secs
   
@@ -93,7 +93,7 @@ object TestHelper {
         Runtime.getRuntime().halt(0) //exit the JVM and all running threads (no other way to kill other threads)
       }
     }, testTimeout * 1000)
-    firstSched.permutations.take(noOfSharedOps).foreach { schedule =>
+    firstSched.permutations.take(noOfSchedules).foreach { schedule =>
       val schedr = new Scheduler(schedule)
       val schedTimer = new Timer()
       schedTimer.schedule(new TimerTask {
@@ -104,6 +104,7 @@ object TestHelper {
         }
       }, schedTimeout * 1000)    
       //println("Exploring Sched: "+schedule)      
+      //println("Testing configuration " + schedule)
       fun(schedr)   
       schedTimer.cancel()
     }

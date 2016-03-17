@@ -12,7 +12,7 @@ trait IntegerIndices { self: ProducerConsumer[_] =>
   var count: Int = 0
 }
 
-abstract class ProducerConsumer[T](size: Int) { self =>
+abstract class ProducerConsumer[T](size: Int) extends Schedulable { self =>
   require(size > 0)
 
   def createBuffer(_size: Int) = new InternalBuffer[T] {
