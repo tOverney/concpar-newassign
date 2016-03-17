@@ -65,6 +65,14 @@ class BoundedBufferSuite extends FunSuite {
       sched.runInParallel(ops)
     })       
   }
+  
+  /*test("Testing a case of deadlock") {    
+    val sched =((1 to scheduleLength).map(_ => 2) ++ (1 to scheduleLength).map(_ => 1)).toList
+    val schedr = new Scheduler(sched)
+    val prodCons = new SchedProducerConsumer[Int](1, schedr)
+    val ops = List(() => prodCons.putWrong2(1), () => prodCons.take())
+    schedr.runInParallel(ops)  
+  }*/
   /*
   test("Should work with 3 producers, 2 consumer and a buffer of size 1") {
     testManySchedules((1 to scheduleLength).flatMap(_ => List(1, 2, 3, 4, 5)).toList, sched => {
@@ -80,7 +88,7 @@ class BoundedBufferSuite extends FunSuite {
 
 object TestHelper {
   val noOfSchedules = 10000  
-  val scheduleLength = 20 // maximum number of read/writes possible in one thread
+  val scheduleLength = 10 // maximum number of read/writes possible in one thread
   val testTimeout = 60 // the total time out for a test in seconds
   val schedTimeout = 10 // the total time out for execution of a schedule in secs
   
