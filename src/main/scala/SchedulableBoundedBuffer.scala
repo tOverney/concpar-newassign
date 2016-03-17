@@ -95,6 +95,12 @@ class Scheduler(sched: List[Int]) {
     }
   }
   
+  def threadState = {
+    synchronized {
+      threadStates(threadId)
+    }
+  }
+  
   def mapOtherStates(f: WaitingState => WaitingState) = {
     val exception = threadId
     synchronized {
@@ -103,6 +109,12 @@ class Scheduler(sched: List[Int]) {
       }
     }
   }
+  
+  def log(str: String) = {
+    opLog += (" " * ((threadId - 1)*2)) + threadId + ":" + str
+    if(opLog.size > maxOps)
+      throw new Exception(s"Total number of reads/writes performed by threads exceed $maxOps. A possible deadlock!") 
+  }
 
   /**
    * Executes a read or write operation to a global data structure as per the given schedule
@@ -110,9 +122,7 @@ class Scheduler(sched: List[Int]) {
    */
   def exec[T](primop: => T)(msg: =>String): T = {
     updateThreadState(VariableReadWrite(threadLocks))
-    opLog += (" " * ((threadId - 1)*2)) + threadId + ":" + msg
-    if(opLog.size > maxOps)
-      throw new Exception(s"Total number of reads/writes performed by threads exceed $maxOps. A possible deadlock!")
+    log(msg)
     primop
   }
 
@@ -191,18 +201,24 @@ class Scheduler(sched: List[Int]) {
                   s"Thread $id is waiting on lock ${state.lockToAquire} held by thread ${whoHasLock(state.lockToAquire)}" }.mkString("\n")
                 throw new Exception(s"Deadlock: Thread$s $waiting are interlocked. Indeed:\n$reason")
               } else {
-                val next = schedule.indexWhere(t => threadsNotBlocked.exists{ case (id, state) => id == t})
-                if (next != -1) {
-     //println(s"$tid: schedule is $schedule, next chosen is ${schedule(next)}")
-                  val chosenOne = schedule(next)
-                  schedule = schedule.take(next) ++ schedule.drop(next + 1)
+                if(threadsNotBlocked.size == 1) { // Do not consume the schedule if only one thread can execute.
+                  val chosenOne = threadsNotBlocked(0)._1
                   canContinue = Some((chosenOne, threadStates(chosenOne)))
                   if(chosenOne == tid) decide() else false
                 } else {
-                  val tnb = threadsNotBlocked.map(_._1).mkString(",")
-                  val s = if(schedule.isEmpty) "empty" else schedule.mkString(",")
-                  val only = if(schedule.isEmpty) "" else " only"
-                  throw new Exception(s"The schedule is $s but$only threads ${tnb} can continue")
+                  val next = schedule.indexWhere(t => threadsNotBlocked.exists{ case (id, state) => id == t})
+                  if (next != -1) {
+       //println(s"$tid: schedule is $schedule, next chosen is ${schedule(next)}")
+                    val chosenOne = schedule(next)
+                    schedule = schedule.take(next) ++ schedule.drop(next + 1)
+                    canContinue = Some((chosenOne, threadStates(chosenOne)))
+                    if(chosenOne == tid) decide() else false
+                  } else {
+                    val tnb = threadsNotBlocked.map(_._1).mkString(",")
+                    val s = if(schedule.isEmpty) "empty" else schedule.mkString(",")
+                    val only = if(schedule.isEmpty) "" else " only"
+                    throw new Exception(s"The schedule is $s but$only threads ${tnb} can continue")
+                  }
                 }
               }
             }
