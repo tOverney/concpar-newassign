@@ -292,9 +292,9 @@ class SchedProducerConsumer[T](size: Int, val scheduler: Scheduler) extends Prod
   var h: Int = 0
   var c: Int = 0
 
-  def head_=(i: Int) = scheduler.exec { h = i }(s"Write head<-$i")
-  def head: Int = scheduler.exec { h }(s"Read head->$h")
-  def count_=(i: Int) = scheduler.exec { c = i }(s"Write count<-$i")
-  def count: Int = scheduler.exec { c }(s"Read count->$c")
+  def head_=(i: Int) = scheduler.exec { h = i }(s"Write head  = $i")
+  def head: Int = scheduler.exec { h }(s"Read  head  -> $h")
+  def count_=(i: Int) = scheduler.exec { c = i }(s"Write count = $i")
+  def count: Int = scheduler.exec { c }(s"Read  count -> $c")
 }
 
