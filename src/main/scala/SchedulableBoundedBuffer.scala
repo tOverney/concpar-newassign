@@ -48,10 +48,11 @@ class Scheduler(sched: List[Int]) {
               updateThreadState(End)
             } catch {
               case e: Exception =>
+                log(s"throw ${e.toString}")
                 println(s"Thread $fakeId threw Exception on the following schedule:")
                 println(opLog.mkString("\n"))
-                println(s"$fakeId: ${e.toString}")
-                updateThreadState(End)
+                //println(s"$fakeId: ${e.toString}")
+                //updateThreadState(End)
                 Runtime.getRuntime().halt(0) //exit the JVM and all running threads (no other way to kill other threads)                
             }
           }
@@ -298,10 +299,19 @@ class SchedProducerConsumer[T](size: Int, val scheduler: Scheduler) extends Prod
   override def createBuffer(_size: Int) = new SchedulableBoundedBuffer(size, scheduler)
   var h: Int = 0
   var c: Int = 0
+  
+  var headThread: Option[Int] = None
+  var countThread: Option[Int] = None
 
-  def head_=(i: Int) = scheduler.exec { h = i }(s"Write head  = $i")
+  def head_=(i: Int) = scheduler.exec {
+    h = i
+    headThread = Some(scheduler.threadId)
+  }(s"Write head  = $i")
   def head: Int = scheduler.exec { h }(s"Read  head  -> $h")
-  def count_=(i: Int) = scheduler.exec { c = i }(s"Write count = $i")
+  def count_=(i: Int) = scheduler.exec {
+    c = i
+    countThread = Some(scheduler.threadId)
+  }(s"Write count = $i")
   def count: Int = scheduler.exec { c }(s"Read  count -> $c")
 }
 
