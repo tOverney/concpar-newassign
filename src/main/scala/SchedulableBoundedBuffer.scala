@@ -10,22 +10,22 @@ import scala.collection.mutable._
  * Note: the real schedule that is executed may deviate from the input schedule
  * due to the adjustments that had to be made for locks
  */
-class Scheduler(sched: List[Int]) {  
-  val iterationBeforeGoingOutOfTurn = 1000000  
+class Scheduler(sched: List[Int]) {
+  val iterationBeforeGoingOutOfTurn = 1000000
   val maxOps = 10000 // a limit on the maximum number of operations the code is allowed to perform
-    
+
   private var schedule = sched
   private var numThreads = 0
   private val realToFakeThreadId = Map[Long, Int]()
   private val opLog = ListBuffer[String]() // a mutable list (used for efficient concat)   
   private val threadStates = Map[Int, WaitingState]()
-    
+
   // Helpers
-  def runInParallel(op1: =>Any): Unit = runInParallel(List(() => op1))
-  def runInParallel(op1: =>Any, op2: =>Any): Unit = runInParallel(List(() => op1, () => op2))
-  def runInParallel(op1: =>Any, op2: =>Any, op3: =>Any): Unit = runInParallel(List(() => op1, () => op2, () => op3))
-  def runInParallel(op1: =>Any, op2: =>Any, op3: =>Any, op4: =>Any): Unit = runInParallel(List(() => op1, () => op2, () => op3, () => op4))
-  
+  def runInParallel(op1: => Any): Unit = runInParallel(List(() => op1))
+  def runInParallel(op1: => Any, op2: => Any): Unit = runInParallel(List(() => op1, () => op2))
+  def runInParallel(op1: => Any, op2: => Any, op3: => Any): Unit = runInParallel(List(() => op1, () => op2, () => op3))
+  def runInParallel(op1: => Any, op2: => Any, op3: => Any, op4: => Any): Unit = runInParallel(List(() => op1, () => op2, () => op3, () => op4))
+
   /**
    * Runs a set of operations in parallel as per the schedule.
    * Each operation may consist of many primitive operations like reads or writes
@@ -58,11 +58,11 @@ class Scheduler(sched: List[Int]) {
     // start all threads
     threads.foreach(_.start())
     // Now the scheduling operation.
-    
+
     // wait for all threads to complete
     threads.foreach(_.join())
   }
-  
+
   // Updates the state of the current thread
   def updateThreadState(state: WaitingState): Unit = {
     val tid = threadId
@@ -71,56 +71,55 @@ class Scheduler(sched: List[Int]) {
     }
     state match {
       case Sync(lockToAquire, locks) =>
-        if(locks.indexOf(lockToAquire) < 0) waitForTurn else {
+        if (locks.indexOf(lockToAquire) < 0) waitForTurn else {
           updateThreadState(Running(lockToAquire +: locks)) // Keep locks as a FIFO;
         }
-      case Start => waitStart()
-      case End => removeFromSchedule(tid)
+      case Start      => waitStart()
+      case End        => removeFromSchedule(tid)
       case Running(_) =>
-      case _ => waitForTurn // Wait, SyncUnique, VariableReadWrite
+      case _          => waitForTurn // Wait, SyncUnique, VariableReadWrite
     }
   }
-  
-  
+
   def waitStart() {
     waitingForDecision(threadId) = None
-    while(threadStates.size < numThreads) {
+    while (threadStates.size < numThreads) {
       Thread.sleep(1)
     }
   }
-  
+
   def threadLocks = {
     synchronized {
       threadStates(threadId).locks
     }
   }
-  
+
   def threadState = {
     synchronized {
       threadStates(threadId)
     }
   }
-  
+
   def mapOtherStates(f: WaitingState => WaitingState) = {
     val exception = threadId
     synchronized {
-      for(k <- threadStates.keys if k != exception) {
+      for (k <- threadStates.keys if k != exception) {
         threadStates(k) = f(threadStates(k))
       }
     }
   }
-  
+
   def log(str: String) = {
-    opLog += (" " * ((threadId - 1)*2)) + threadId + ":" + str
-    if(opLog.size > maxOps)
-      throw new Exception(s"Total number of reads/writes performed by threads exceed $maxOps. A possible deadlock!") 
+    opLog += (" " * ((threadId - 1) * 2)) + threadId + ":" + str
+    if (opLog.size > maxOps)
+      throw new Exception(s"Total number of reads/writes performed by threads exceed $maxOps. A possible deadlock!")
   }
 
   /**
    * Executes a read or write operation to a global data structure as per the given schedule
-   * @param msg a message corresponding to the operation that will be logged 
+   * @param msg a message corresponding to the operation that will be logged
    */
-  def exec[T](primop: => T)(msg: =>String): T = {
+  def exec[T](primop: => T)(msg: => String): T = {
     updateThreadState(VariableReadWrite(threadLocks))
     log(msg)
     primop
@@ -129,31 +128,32 @@ class Scheduler(sched: List[Int]) {
   private def setThreadId(fakeId: Int) = synchronized {
     realToFakeThreadId(Thread.currentThread.getId) = fakeId
   }
-  
-  private def threadId = 
+
+  private def threadId =
     realToFakeThreadId(Thread.currentThread().getId())
 
   private def isTurn(tid: Int) = synchronized {
     (!schedule.isEmpty && schedule.head != tid)
   }
-  
+
   /** returns true if the thread can continue to execute, and false otherwise */
   def decide(force: Boolean = false): Boolean = {
     val tid = threadId
     synchronized {
       canContinue match {
         case Some((i, state)) if i == tid =>
-      //println(s"$tid: Runs ! Was in state $state")
+          //println(s"$tid: Runs ! Was in state $state")
           waitingForDecision(i) = None // Make sure canContinue will not be recomputed.
           canContinue = None
           state match {
             case Sync(lockToAquire, locks) => updateThreadState(Running(lockToAquire +: locks))
             case SyncUnique(lockToAquire, locks) =>
               mapOtherStates {
-                state => state match {
-                  case SyncUnique(lockToAquire2, locks2) if lockToAquire2 == lockToAquire => Wait(lockToAquire2, locks2)
-                  case e => e
-                }
+                state =>
+                  state match {
+                    case SyncUnique(lockToAquire2, locks2) if lockToAquire2 == lockToAquire => Wait(lockToAquire2, locks2)
+                    case e => e
+                  }
               }
               updateThreadState(Running(lockToAquire +: locks))
             case VariableReadWrite(locks) => updateThreadState(Running(locks))
@@ -164,66 +164,66 @@ class Scheduler(sched: List[Int]) {
           false
         case None =>
           // If all remaining threads are waiting for a decision.
-        if (waitingForDecision.values.forall(_.nonEmpty)) {
-    //println(s"$tid: who is going to take a decision? ${waitingForDecision(tid)}")
-          // If this thread is the last one to 
-          val v = waitingForDecision.toSeq
-          val t = threadStates.toSeq
-          if(canContinue.nonEmpty) {
-            throw new Exception(v + "," + t + " !!!")
-          }
-          if (waitingForDecision.isEmpty || threadStates.isEmpty) true else
-          if (force || waitingForDecision(tid) == Some(numToEnter)) { // The last thread who enters the decision loop takes the decision.
-   //println(s"$tid: I'm taking a decision")
-            if (threadStates.values.forall { case e: Wait => true case _ => false} && threadStates.size >= 1) {
-              val waiting = threadStates.keys.map(_.toString).mkString(", ")
-              val s = if(threadStates.size > 1) "s" else ""
-              val are = if(threadStates.size > 1) "are" else "is"
-              throw new Exception(s"Deadlock: Thread$s $waiting $are waiting but all others have ended and cannot notify them.")
-            } else {
-              // Threads can be in Wait, Sync, SyncUnique, and VariableReadWrite mode.
-              // Let's determine which ones can continue.
-              val notFree = threadStates.collect{ case (id, state) => state.locks }.flatten.toSet
-              val whoHasLock = threadStates.toSeq.flatMap{ case (id, state) => state.locks.map(lock => (lock, id))}.toMap
-              val threadsNotBlocked = threadStates.toSeq.filter{
-                case (id, v: VariableReadWrite) => true
-                case (id, v: CanContinueIfAcquiresLock) if !notFree(v.lockToAquire) || v.locks.indexOf(v.lockToAquire) >= 0 => true
-                case _ => false
-              }
-              if (threadsNotBlocked.isEmpty) {
+          if (waitingForDecision.values.forall(_.nonEmpty)) {
+            //println(s"$tid: who is going to take a decision? ${waitingForDecision(tid)}")
+            // If this thread is the last one to 
+            val v = waitingForDecision.toSeq
+            val t = threadStates.toSeq
+            if (canContinue.nonEmpty) {
+              throw new Exception(v + "," + t + " !!!")
+            }
+            if (waitingForDecision.isEmpty || threadStates.isEmpty) true else if (force || waitingForDecision(tid) == Some(numToEnter)) { // The last thread who enters the decision loop takes the decision.
+              //println(s"$tid: I'm taking a decision")
+              if (threadStates.values.forall { case e: Wait => true case _ => false } && threadStates.size >= 1) {
                 val waiting = threadStates.keys.map(_.toString).mkString(", ")
-                val s = if(threadStates.size > 1) "s" else ""
-                val are = if(threadStates.size > 1) "are" else "is"
-                val reason = threadStates.collect{
-                  case (id, state: CanContinueIfAcquiresLock) if !notFree(state.lockToAquire) =>
-                  s"Thread $id is waiting on lock ${state.lockToAquire} held by thread ${whoHasLock(state.lockToAquire)}" }.mkString("\n")
-                throw new Exception(s"Deadlock: Thread$s $waiting are interlocked. Indeed:\n$reason")
+                val s = if (threadStates.size > 1) "s" else ""
+                val are = if (threadStates.size > 1) "are" else "is"
+                throw new Exception(s"Deadlock: Thread$s $waiting $are waiting but all others have ended and cannot notify them.")
               } else {
-                if(threadsNotBlocked.size == 1) { // Do not consume the schedule if only one thread can execute.
-                  val chosenOne = threadsNotBlocked(0)._1
-                  canContinue = Some((chosenOne, threadStates(chosenOne)))
-                  if(chosenOne == tid) decide() else false
+                // Threads can be in Wait, Sync, SyncUnique, and VariableReadWrite mode.
+                // Let's determine which ones can continue.
+                val notFree = threadStates.collect { case (id, state) => state.locks }.flatten.toSet
+                val whoHasLock = threadStates.toSeq.flatMap { case (id, state) => state.locks.map(lock => (lock, id)) }.toMap
+                val threadsNotBlocked = threadStates.toSeq.filter {
+                  case (id, v: VariableReadWrite) => true
+                  case (id, v: CanContinueIfAcquiresLock) if !notFree(v.lockToAquire) || v.locks.indexOf(v.lockToAquire) >= 0 => true
+                  case _ => false
+                }
+                if (threadsNotBlocked.isEmpty) {
+                  val waiting = threadStates.keys.map(_.toString).mkString(", ")
+                  val s = if (threadStates.size > 1) "s" else ""
+                  val are = if (threadStates.size > 1) "are" else "is"
+                  val reason = threadStates.collect {
+                    case (id, state: CanContinueIfAcquiresLock) if !notFree(state.lockToAquire) =>
+                      s"Thread $id is waiting on lock ${state.lockToAquire} held by thread ${whoHasLock(state.lockToAquire)}"
+                  }.mkString("\n")
+                  throw new Exception(s"Deadlock: Thread$s $waiting are interlocked. Indeed:\n$reason")
                 } else {
-                  val next = schedule.indexWhere(t => threadsNotBlocked.exists{ case (id, state) => id == t})
-                  if (next != -1) {
-       //println(s"$tid: schedule is $schedule, next chosen is ${schedule(next)}")
-                    val chosenOne = schedule(next)
-                    schedule = schedule.take(next) ++ schedule.drop(next + 1)
+                  if (threadsNotBlocked.size == 1) { // Do not consume the schedule if only one thread can execute.
+                    val chosenOne = threadsNotBlocked(0)._1
                     canContinue = Some((chosenOne, threadStates(chosenOne)))
-                    if(chosenOne == tid) decide() else false
+                    if (chosenOne == tid) decide() else false
                   } else {
-                    val tnb = threadsNotBlocked.map(_._1).mkString(",")
-                    val s = if(schedule.isEmpty) "empty" else schedule.mkString(",")
-                    val only = if(schedule.isEmpty) "" else " only"
-                    throw new Exception(s"The schedule is $s but$only threads ${tnb} can continue")
+                    val next = schedule.indexWhere(t => threadsNotBlocked.exists { case (id, state) => id == t })
+                    if (next != -1) {
+                      //println(s"$tid: schedule is $schedule, next chosen is ${schedule(next)}")
+                      val chosenOne = schedule(next)
+                      schedule = schedule.take(next) ++ schedule.drop(next + 1)
+                      canContinue = Some((chosenOne, threadStates(chosenOne)))
+                      if (chosenOne == tid) decide() else false
+                    } else {
+                      val tnb = threadsNotBlocked.map(_._1).mkString(",")
+                      val s = if (schedule.isEmpty) "empty" else schedule.mkString(",")
+                      val only = if (schedule.isEmpty) "" else " only"
+                      throw new Exception(s"The schedule is $s but$only threads ${tnb} can continue")
+                    }
                   }
                 }
               }
-            }
-          } else false
-        } else {
-          false
-        }
+            } else false
+          } else {
+            false
+          }
       }
     }
   }
@@ -245,7 +245,7 @@ class Scheduler(sched: List[Int]) {
     while (!decide()) {
     }
     synchronized {
-      waitingForDecision(tid) = None  
+      waitingForDecision(tid) = None
       numToEnter -= 1
     }
   }
@@ -262,7 +262,7 @@ class Scheduler(sched: List[Int]) {
     }
     decide(force = true)
   }
-  
+
   def getOperationLog() = opLog
 }
 
