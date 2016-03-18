@@ -52,7 +52,6 @@ class Scheduler(sched: List[Int]) {
                 println(s"Thread $fakeId threw Exception on the following schedule:")
                 println(opLog.mkString("\n"))
                 //println(s"$fakeId: ${e.toString}")
-                //updateThreadState(End)
                 Runtime.getRuntime().halt(0) //exit the JVM and all running threads (no other way to kill other threads)                
             }
           }
