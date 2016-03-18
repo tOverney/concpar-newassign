@@ -58,16 +58,16 @@ trait SchedulableImpl extends Schedulable {
 
 
 
-abstract class WaitingState {
+abstract class ThreadState {
   def locks: Seq[AnyRef]
 }
-trait CanContinueIfAcquiresLock extends WaitingState {
+trait CanContinueIfAcquiresLock extends ThreadState {
   def lockToAquire: AnyRef
 }
-case object Start extends WaitingState { def locks: Seq[AnyRef] = Seq.empty }
-case object End extends WaitingState { def locks: Seq[AnyRef] = Seq.empty }
-case class Wait(lockToAquire: AnyRef, locks: Seq[AnyRef]) extends WaitingState
-case class SyncUnique(lockToAquire: AnyRef, locks: Seq[AnyRef]) extends WaitingState with CanContinueIfAcquiresLock
-case class Sync(lockToAquire: AnyRef, locks: Seq[AnyRef]) extends WaitingState with CanContinueIfAcquiresLock
-case class Running(locks: Seq[AnyRef]) extends WaitingState
-case class VariableReadWrite(locks: Seq[AnyRef]) extends WaitingState
+case object Start extends ThreadState { def locks: Seq[AnyRef] = Seq.empty }
+case object End extends ThreadState { def locks: Seq[AnyRef] = Seq.empty }
+case class Wait(lockToAquire: AnyRef, locks: Seq[AnyRef]) extends ThreadState
+case class SyncUnique(lockToAquire: AnyRef, locks: Seq[AnyRef]) extends ThreadState with CanContinueIfAcquiresLock
+case class Sync(lockToAquire: AnyRef, locks: Seq[AnyRef]) extends ThreadState with CanContinueIfAcquiresLock
+case class Running(locks: Seq[AnyRef]) extends ThreadState
+case class VariableReadWrite(locks: Seq[AnyRef]) extends ThreadState

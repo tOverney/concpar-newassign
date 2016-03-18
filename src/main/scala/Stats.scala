@@ -1,4 +1,6 @@
 /* Copyright 2009-2015 EPFL, Lausanne */
+package main.scala
+
 import java.lang.management._
 import scala.collection.JavaConversions._
 

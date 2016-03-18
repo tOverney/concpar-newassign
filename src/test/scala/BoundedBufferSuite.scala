@@ -43,7 +43,7 @@ class BoundedBufferSuite extends FunSuite {
 
   import TestHelper._
   /*test("Should work with one producer, one consumer and a buffer of size 1") {    
-    testManySchedules((1 to scheduleLength).flatMap(_ => List(1, 2)).toList, sched => {
+    testManySchedules((1 to scheduleLength).flatMap(_ => List(2, 1)).toList, sched => {
       val prodCons = new SchedProducerConsumer[Int](1, sched)
       val ops = List(() => prodCons.putWrong1(1), () => prodCons.takeWrong1())
       sched.runInParallel(ops)
