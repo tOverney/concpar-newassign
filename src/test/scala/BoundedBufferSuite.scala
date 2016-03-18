@@ -57,9 +57,9 @@ class BoundedBufferSuite extends FunSuite {
       val ops = List(() => prodCons.putWrong1(1), () => prodCons.putWrong1(2), () => prodCons.takeWrong1())
       sched.runInParallel(ops)
     })           
-  }*/
+  }
   
-  /*test("Testing a case of deadlock") {    
+  test("Testing a case of deadlock") {    
     testManySchedules((1 to scheduleLength).flatMap(_ => List(1, 2)).toList, sched => {
       val prodCons = new SchedProducerConsumer[Int](1, sched)
       val ops = List(() => prodCons.putWrong2(1), () => prodCons.take())
@@ -75,7 +75,7 @@ class BoundedBufferSuite extends FunSuite {
     schedr.runInParallel(ops)  
   }*/
   
-  test("Should work with 3 producers, 2 consumer and a buffer of size 1") {
+  /*test("Should work with 3 producers, 2 consumer and a buffer of size 1") {
     testManySchedules((1 to scheduleLength).flatMap(_ => List(1, 2, 3, 4, 5)).toList, sched => {
       val prodCons = new SchedProducerConsumer[Int](1, sched)
       val ops = List(() => prodCons.putWrong1(1), () => prodCons.putWrong1(2), () => prodCons.putWrong1(3), 
@@ -84,7 +84,21 @@ class BoundedBufferSuite extends FunSuite {
         () => prodCons.take(), () => prodCons.take())*/
       sched.runInParallel(ops)
     })           
-  }  
+  }*/
+  
+  /*test("Should not work with put and takeCorrect2") {    
+    testManySchedules((1 to scheduleLength).flatMap(_ => List(1, 2, 3, 4)).toList, sched => {
+      val prodCons = new SchedProducerConsumer[Int](1, sched)
+      sched.runInParallel(prodCons.put(1), prodCons.put(2), prodCons.takeCorrect2(), prodCons.takeCorrect2())
+    })       
+  }*/
+   test("Should work with putCorrect2 and takeCorrect2") {    
+    testManySchedules((1 to scheduleLength).flatMap(_ => List(1, 2, 3, 4)).toList, sched => {
+      val prodCons = new SchedProducerConsumer[Int](1, sched)
+      sched.runInParallel(prodCons.putCorrect2(1), prodCons.putCorrect2(2), prodCons.takeCorrect2(), prodCons.takeCorrect2())
+    })       
+  }
+  
 }
 
 object TestHelper {

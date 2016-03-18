@@ -14,8 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * due to the adjustments that had to be made for locks
  */
 class Scheduler(sched: List[Int]) {
-  val iterationBeforeGoingOutOfTurn = 1000000
-  val maxOps = 10000 // a limit on the maximum number of operations the code is allowed to perform
+  val maxOps = 100 // a limit on the maximum number of operations the code is allowed to perform
     
   private var schedule = sched
   private var numThreads = 0
@@ -52,6 +51,7 @@ class Scheduler(sched: List[Int]) {
                 println(s"Thread $fakeId threw Exception on the following schedule:")
                 println(opLog.mkString("\n"))
                 println(s"$fakeId: ${e.toString}")
+                updateThreadState(End)
                 Runtime.getRuntime().halt(0) //exit the JVM and all running threads (no other way to kill other threads)                
             }
           }
@@ -138,14 +138,14 @@ class Scheduler(sched: List[Int]) {
     realToFakeThreadId(Thread.currentThread.getId) = fakeId
   }
 
-  private def threadId =
+  def threadId =
     realToFakeThreadId(Thread.currentThread().getId())
 
   private def isTurn(tid: Int) = synchronized {
     (!schedule.isEmpty && schedule.head != tid)
   }
   
-  def canProceed(force: Boolean = false): Boolean = {
+  def canProceed(): Boolean = {
     val tid = threadId
     canContinue match {
       case Some((i, state)) if i == tid =>
@@ -265,19 +265,31 @@ class Scheduler(sched: List[Int]) {
 
 class SchedulableBoundedBuffer[T](val size: Int, scheduler: Scheduler) extends InternalBuffer[T] {
   private val buffer = new Array[Option[T]](size)
+  private val threadBuffer = new Array[Option[Int]](size) // Who last wrote in the array.
 
-  def update(index: Int, elem: T) {
+  def update(index: Int, elem: T): Unit = {
     scheduler.exec {
       buffer(index) = Some(elem)
+      threadBuffer(index) = Some(scheduler.threadId)
     }(s"Write buffer($index) = $elem")
   }
 
   def apply(index: Int): T = scheduler.exec {
-    buffer(index).get
+    buffer(index) match {
+      case None => 
+        threadBuffer(index) match {
+          case Some(tid) => throw new Exception(s"buffer($index) was deleted by thread $tid ! ")
+          case _ => throw new Exception(s"buffer($index) was never set ! ")
+        }
+      case Some(e) => e
+    }
   }(s"Read buffer($index)")
 
   def delete(index: Int) {
-    scheduler.exec { buffer(index) = None }(s"Delete buffer($index)")
+    scheduler.exec {
+      buffer(index) = None
+      threadBuffer(index) = Some(scheduler.threadId)
+    }(s"Delete buffer($index)")
   }
 }
 

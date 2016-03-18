@@ -123,6 +123,35 @@ abstract class ProducerConsumer[T](size: Int) extends Schedulable { self =>
       toReturn
     }
   }
+  
+  def putCorrect2(e: T): Unit = {
+    while (true)  {
+      while (isFull) {}
+      synchronized {
+        if(!isFull) {
+          buffer(tail) = e
+          count += 1
+          return
+        }
+      }
+    }
+  }
+  
+  def takeCorrect2(): T = {
+    while (true) {
+      while (isEmpty) {}
+      synchronized {
+        if (!isEmpty) {
+          val toReturn = buffer(head)
+          buffer.delete(head)
+          head = (head + 1) % size
+          count -= 1
+          return toReturn
+        }
+      }
+    }
+    throw new Exception("Not implemented !!")
+  }
 
   def tail: Int = (head + count) % size
   def isFull: Boolean = count == size
