@@ -57,12 +57,12 @@ class BoundedBufferSuite extends FunSuite {
     })
   }
 
-  /*test("Testing a case of deadlock") {
+  test("Testing a case of deadlock") {
     testManySchedules(2, sched => {
       val prodCons = new SchedProducerConsumer[Int](1, sched)
       List(() => prodCons.putWrong2(1), () => prodCons.take())
     })
-  }*/
+  }
 
   /*test("Testing a case of deadlock") {    
     val sched =((1 to scheduleLength).map(_ => 2) ++ (1 to scheduleLength).map(_ => 1)).toList
@@ -82,12 +82,12 @@ class BoundedBufferSuite extends FunSuite {
     })
   }
 
-  /*test("Should not work with put and takeCorrect2") {    
-    testManySchedules((1 to scheduleLength).flatMap(_ => List(1, 2, 3, 4)).toList, sched => {
+  test("Should not work with put and takeCorrect2") {
+    testManySchedules(4, sched => {
       val prodCons = new SchedProducerConsumer[Int](1, sched)
-      sched.runInParallel(prodCons.put(1), prodCons.put(2), prodCons.takeCorrect2(), prodCons.takeCorrect2())
-    })       
-  }*/
+      List(() => prodCons.put(1), () => prodCons.put(2), () => prodCons.takeCorrect2(), () => prodCons.takeCorrect2())
+    })
+  }
 
   test("Should work with putCorrect2 and takeCorrect2") {
     testManySchedules(4, sched => {
