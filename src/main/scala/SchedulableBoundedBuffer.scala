@@ -7,6 +7,11 @@ import Stats._
 
 import java.util.concurrent.atomic.AtomicInteger
 
+sealed abstract class Result
+case class RetVal(rets: List[Any]) extends Result
+case class Except(msg: String) extends Result
+case class Timeout(msg: String) extends Result
+  
 /**
  * A class that maintains schedule and a set of thread ids.
  * The schedules are advanced after an operation of a SchedulableBuffer is performed.
@@ -22,19 +27,17 @@ class Scheduler(sched: List[Int]) {
   private val opLog = ListBuffer[String]() // a mutable list (used for efficient concat)   
   private val threadStates = Map[Int, ThreadState]()
 
-  // Helpers
-  def runInParallel(op1: => Any): Unit = runInParallel(List(() => op1))
-  def runInParallel(op1: => Any, op2: => Any): Unit = runInParallel(List(() => op1, () => op2))
-  def runInParallel(op1: => Any, op2: => Any, op3: => Any): Unit = runInParallel(List(() => op1, () => op2, () => op3))
-  def runInParallel(op1: => Any, op2: => Any, op3: => Any, op4: => Any): Unit = runInParallel(List(() => op1, () => op2, () => op3, () => op4))
-
   /**
    * Runs a set of operations in parallel as per the schedule.
    * Each operation may consist of many primitive operations like reads or writes
    * to shared data structure each of which should be executed using the function `exec`.
+   * @timeout in milliseconds
+   * @return true - all threads completed on time,  false -some tests timed out.
    */
-  def runInParallel(ops: List[() => Any]) {
+  def runInParallel(timeout: Long, ops: List[() => Any]): Result = {
     numThreads = ops.length
+    val threadRes = Array.fill(numThreads){ None: Any}     
+    var exception: Option[Except] = None
     // create threads    
     val threads = ops.zipWithIndex.map {
       case (op, i) =>
@@ -44,15 +47,15 @@ class Scheduler(sched: List[Int]) {
             setThreadId(fakeId)
             try {
               updateThreadState(Start)
-              op()
+              val res = op()
               updateThreadState(End)
+              threadRes(i) = res
             } catch {
               case e: Exception =>
                 log(s"throw ${e.toString}")
-                println(s"Thread $fakeId threw Exception on the following schedule:")
-                println(opLog.mkString("\n"))
+                exception = Some(Except(s"Thread $fakeId threw Exception on the following schedule: \n"+opLog.mkString("\n")))
                 //println(s"$fakeId: ${e.toString}")
-                Runtime.getRuntime().halt(0) //exit the JVM and all running threads (no other way to kill other threads)                
+                //Runtime.getRuntime().halt(0) //exit the JVM and all running threads (no other way to kill other threads)                
             }
           }
         })
@@ -60,9 +63,21 @@ class Scheduler(sched: List[Int]) {
     // start all threads
     threads.foreach(_.start())
     // Now the scheduling operation.
-
-    // wait for all threads to complete
-    threads.foreach(_.join())
+    // wait for all threads to complete, or for an exception to be thrown, or for the time out to expire
+    var remTime = timeout    
+    threads.foreach{
+      case _ if remTime <= 0 || exception.isDefined =>        
+      case th =>         
+        timed{ th.join(remTime) }{time => remTime -= time}        
+    }
+    if(remTime <= 0){ // timeout ?
+      Timeout(opLog.mkString("\n"))
+    } else if(exception.isDefined){ 
+      exception.get
+    } else {
+      // every thing executed normally
+      RetVal(threadRes.toList)
+    }
   }
 
   // Updates the state of the current thread
