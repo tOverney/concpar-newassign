@@ -7,23 +7,24 @@ trait InternalBuffer[T] {
   val size: Int
 }
 
-trait IntegerIndices { self: BoundedBuffer[_] =>
+trait ConcreteInternals[T] { self: BoundedBuffer[_] =>
   var head: Int = 0
   var count: Int = 0
+
+  val buffer: InternalBuffer[T] = new InternalBuffer[T] {
+    private val buffer: Array[Option[T]] = new Array(self.bufferSize)
+    def update(index: Int, elem: T): Unit = buffer(index) = Some(elem)
+    def apply(index: Int): T = buffer(index).get
+    def delete(index: Int): Unit = buffer(index) = None
+    val size = self.bufferSize
+  }
 }
 
 abstract class BoundedBuffer[T](size: Int) extends Schedulable {
   require(size > 0)
 
-  def createBuffer(_size: Int) = new InternalBuffer[T] {
-    private val buffer: Array[Option[T]] = new Array(_size)
-    def update(index: Int, elem: T): Unit = buffer(index) = Some(elem)
-    def apply(index: Int): T = buffer(index).get
-    def delete(index: Int): Unit = buffer(index) = None
-    val size = _size
-  }
-
-  val buffer: InternalBuffer[T] = createBuffer(size)
+  val bufferSize = size
+  val buffer: InternalBuffer[T]
 
   // Emulate "var head, count: Int = 0"
   def head: Int

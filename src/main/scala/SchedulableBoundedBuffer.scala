@@ -308,9 +308,9 @@ class SchedulableInternalBuffer[T](val size: Int, scheduler: Scheduler) extends 
   }
 }
 
-class SchedProducerConsumer[T](size: Int, val scheduler: Scheduler) extends BoundedBuffer[T](size) with SchedulableImpl {
+trait MockedInternals[T] { self: SchedProducerConsumer[T] =>
+  val buffer = new SchedulableInternalBuffer[T](self.bufferSize, self.scheduler)
 
-  override def createBuffer(_size: Int) = new SchedulableInternalBuffer(size, scheduler)
   var h: Int = 0
   var c: Int = 0
   
@@ -327,5 +327,10 @@ class SchedProducerConsumer[T](size: Int, val scheduler: Scheduler) extends Boun
     countThread = Some(scheduler.threadId)
   }(s"Write count = $i")
   def count: Int = scheduler.exec { c }(s"Read  count -> $c")
+}
+
+class SchedProducerConsumer[T](size: Int, val scheduler: Scheduler)
+  extends BoundedBuffer[T](size) with SchedulableImpl with MockedInternals[T] {
+
 }
 

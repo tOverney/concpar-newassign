@@ -16,7 +16,7 @@ import Stats._
 class BoundedBufferSuite extends FunSuite {
 
   /*  test("run concurrent update of the buffer") {
-    val queue = new ProducerConsumer[Int](10) with IntegerIndices
+    val queue = new BoundedBuffer[Int](10) with ConcreteInternals[Int]
     val counter = new AtomicInteger(0)
     val numberProduce = 10 //TODO: correctly close the threads if too many are spawned
     val taskSize = 10
