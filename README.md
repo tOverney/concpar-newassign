@@ -2,7 +2,7 @@
 ### A new assignment about bounded buffer.
 
 This is based on an old assignment in java that we had to implement for our
-Concurrency course. @tOverney implementation of (the old java ass. can be seen here)[https://github.com/SonicFrog/PubSubServer].
+Concurrency course. @tOverney implementation of [the old java assignment can be seen here](https://github.com/SonicFrog/PubSubServer).
 
 
 ### Key points of the idea
