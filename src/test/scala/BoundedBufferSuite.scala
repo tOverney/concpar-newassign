@@ -45,21 +45,21 @@ class BoundedBufferSuite extends FunSuite {
   import TestHelper._
   test("Should work with one producer, one consumer and a buffer of size 1") {
     testManySchedules(2, sched => {
-      val prodCons = new SchedProducerConsumer[Int](1, sched)
+      val prodCons = new SchedulableBoundedBuffer[Int](1, sched)
       List(() => prodCons.putWrong1(1), () => prodCons.takeWrong1())
     })
   }
 
   test("Should work with 2 producers, one consumer and a buffer of size 1") {
     testManySchedules(3, sched => {
-      val prodCons = new SchedProducerConsumer[Int](1, sched)
+      val prodCons = new SchedulableBoundedBuffer[Int](1, sched)
       List(() => prodCons.putWrong1(1), () => prodCons.putWrong1(2), () => prodCons.takeWrong1())
     })
   }
 
   test("Testing a case of deadlock") {
     testManySchedules(2, sched => {
-      val prodCons = new SchedProducerConsumer[Int](1, sched)
+      val prodCons = new SchedulableBoundedBuffer[Int](1, sched)
       List(() => prodCons.putWrong2(1), () => prodCons.take())
     })
   }
@@ -67,14 +67,14 @@ class BoundedBufferSuite extends FunSuite {
   /*test("Testing a case of deadlock") {    
     val sched =((1 to scheduleLength).map(_ => 2) ++ (1 to scheduleLength).map(_ => 1)).toList
     val schedr = new Scheduler(sched)
-    val prodCons = new SchedProducerConsumer[Int](1, schedr)
+    val prodCons = new SchedulableBoundedBuffer[Int](1, schedr)
     val ops = List(() => prodCons.putWrong2(1), () => prodCons.take())
     schedr.runInParallel(ops)  
   }*/
 
   test("Should work with 3 producers, 2 consumer and a buffer of size 1") {
     testManySchedules(5, sched => {
-      val prodCons = new SchedProducerConsumer[Int](1, sched)
+      val prodCons = new SchedulableBoundedBuffer[Int](1, sched)
       List(() => prodCons.putWrong1(1), () => prodCons.putWrong1(2), () => prodCons.putWrong1(3),
         () => prodCons.takeWrong1(), () => prodCons.takeWrong1())
       /*val ops = List(() => prodCons.put(1), () => prodCons.put(2), () => prodCons.put(3),
@@ -84,14 +84,14 @@ class BoundedBufferSuite extends FunSuite {
 
   test("Should not work with put and takeCorrect2") {
     testManySchedules(4, sched => {
-      val prodCons = new SchedProducerConsumer[Int](1, sched)
+      val prodCons = new SchedulableBoundedBuffer[Int](1, sched)
       List(() => prodCons.put(1), () => prodCons.put(2), () => prodCons.takeCorrect2(), () => prodCons.takeCorrect2())
     })
   }
 
   test("Should work with putCorrect2 and takeCorrect2") {
     testManySchedules(4, sched => {
-      val prodCons = new SchedProducerConsumer[Int](1, sched)
+      val prodCons = new SchedulableBoundedBuffer[Int](1, sched)
       List(() => prodCons.putCorrect2(1), () => prodCons.putCorrect2(2), () => prodCons.takeCorrect2(), () => prodCons.takeCorrect2())
     })
   }
