@@ -278,7 +278,7 @@ class Scheduler(sched: List[Int]) {
   def getOperationLog() = opLog
 }
 
-class SchedulableBoundedBuffer[T](val size: Int, scheduler: Scheduler) extends InternalBuffer[T] {
+class SchedulableInternalBuffer[T](val size: Int, scheduler: Scheduler) extends InternalBuffer[T] {
   private val buffer = new Array[Option[T]](size)
   private val threadBuffer = new Array[Option[Int]](size) // Who last wrote in the array.
 
@@ -308,9 +308,9 @@ class SchedulableBoundedBuffer[T](val size: Int, scheduler: Scheduler) extends I
   }
 }
 
-class SchedProducerConsumer[T](size: Int, val scheduler: Scheduler) extends ProducerConsumer[T](size) with SchedulableImpl {
+class SchedProducerConsumer[T](size: Int, val scheduler: Scheduler) extends BoundedBuffer[T](size) with SchedulableImpl {
 
-  override def createBuffer(_size: Int) = new SchedulableBoundedBuffer(size, scheduler)
+  override def createBuffer(_size: Int) = new SchedulableInternalBuffer(size, scheduler)
   var h: Int = 0
   var c: Int = 0
   

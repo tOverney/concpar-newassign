@@ -7,12 +7,12 @@ trait InternalBuffer[T] {
   val size: Int
 }
 
-trait IntegerIndices { self: ProducerConsumer[_] =>
+trait IntegerIndices { self: BoundedBuffer[_] =>
   var head: Int = 0
   var count: Int = 0
 }
 
-abstract class ProducerConsumer[T](size: Int) extends Schedulable { self =>
+abstract class BoundedBuffer[T](size: Int) extends Schedulable {
   require(size > 0)
 
   def createBuffer(_size: Int) = new InternalBuffer[T] {
