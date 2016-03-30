@@ -93,7 +93,6 @@ class BoundedBufferSuite extends FunSuite {
       List(() => prodCons.putCorrect2(1), () => prodCons.putCorrect2(2), () => prodCons.takeCorrect2(), () => prodCons.takeCorrect2())
     })    
   }
-
 }
 
 object TestHelper {
