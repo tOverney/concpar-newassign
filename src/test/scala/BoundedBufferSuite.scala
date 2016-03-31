@@ -1,4 +1,4 @@
-package main.scala
+package pubsub
 
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
@@ -10,7 +10,11 @@ import scala.concurrent.JavaConversions._
 import java.util.concurrent.Executors
 import scala.util.Random
 import scala.collection.mutable.{Map => MutableMap}
-import Stats._
+
+import instrumentation._
+import instrumentation.Stats._
+
+import pubsub.collection._
 
 @RunWith(classOf[JUnitRunner])
 class BoundedBufferSuite extends FunSuite {
