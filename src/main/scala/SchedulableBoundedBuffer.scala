@@ -309,7 +309,7 @@ class SchedulableInternalBuffer[T](val size: Int, scheduler: Scheduler) extends 
 }
 
 trait MockedInternals[T] { self: SchedulableBoundedBuffer[T] =>
-  val buffer = new SchedulableInternalBuffer[T](self.bufferSize, self.scheduler)
+  override val buffer = new SchedulableInternalBuffer[T](self.bufferSize, self.scheduler)
 
   var h: Int = 0
   var c: Int = 0
@@ -317,16 +317,18 @@ trait MockedInternals[T] { self: SchedulableBoundedBuffer[T] =>
   var headThread: Option[Int] = None
   var countThread: Option[Int] = None
 
-  def head_=(i: Int) = scheduler.exec {
+  override def head_=(i: Int) = scheduler.exec {
     h = i
     headThread = Some(scheduler.threadId)
   }(s"Write head  = $i")
-  def head: Int = scheduler.exec { h }(s"Read  head  -> $h")
-  def count_=(i: Int) = scheduler.exec {
+  override def head: Int = scheduler.exec { h }(s"Read  head  -> $h")
+  
+  override def count_=(i: Int) = scheduler.exec {
     c = i
     countThread = Some(scheduler.threadId)
   }(s"Write count = $i")
-  def count: Int = scheduler.exec { c }(s"Read  count -> $c")
+  
+  override def count: Int = scheduler.exec { c }(s"Read  count -> $c")
 }
 
 class SchedulableBoundedBuffer[T](size: Int, val scheduler: Scheduler)

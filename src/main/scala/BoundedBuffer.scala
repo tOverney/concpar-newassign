@@ -8,8 +8,9 @@ trait InternalBuffer[T] {
 }
 
 trait ConcreteInternals[T] { self: BoundedBuffer[_] =>
-  var head: Int = 0
-  var count: Int = 0
+  override var head: Int = 0
+  override var count: Int = 0
+
 
   val buffer: InternalBuffer[T] = new InternalBuffer[T] {
     private val buffer: Array[Option[T]] = new Array(self.bufferSize)
