@@ -1,6 +1,6 @@
 package instrumentation
 
-trait SchedulableImpl extends Schedulable {
+trait MockedSchedulable extends Schedulable {
   def scheduler: Scheduler
   
   // Can be overriden.

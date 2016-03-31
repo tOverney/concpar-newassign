@@ -334,7 +334,7 @@ trait MockedInternals[T] { self: SchedulableBoundedBuffer[T] =>
 }
 
 class SchedulableBoundedBuffer[T](size: Int, val scheduler: Scheduler)
-  extends BoundedBuffer[T](size) with SchedulableImpl with MockedInternals[T] {
+  extends BoundedBuffer[T](size) with MockedSchedulable with MockedInternals[T] {
 
 }
 
