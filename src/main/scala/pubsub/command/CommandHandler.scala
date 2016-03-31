@@ -1,4 +1,7 @@
-package main.scala
+package pubsub.command
+
+import pubsub.Client
+import pubsub.collection._
 
 class CommandHandler(buffer: BoundedBuffer[Command]) {
   import CommandHandler._

@@ -1,4 +1,4 @@
-package main.scala
+package instrumentation
 
 import java.util.concurrent._;
 import scala.concurrent.duration._
@@ -6,6 +6,8 @@ import scala.collection.mutable._
 import Stats._
 
 import java.util.concurrent.atomic.AtomicInteger
+
+import pubsub.collection._
 
 sealed abstract class Result
 case class RetVal(rets: List[Any]) extends Result

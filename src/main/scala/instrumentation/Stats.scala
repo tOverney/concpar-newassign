@@ -1,5 +1,5 @@
 /* Copyright 2009-2015 EPFL, Lausanne */
-package main.scala
+package instrumentation
 
 import java.lang.management._
 import scala.collection.JavaConversions._

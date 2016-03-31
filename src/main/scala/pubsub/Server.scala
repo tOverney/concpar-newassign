@@ -1,4 +1,4 @@
-package main.scala
+package pubsub
 
 import java.net.ServerSocket
 import java.net.Socket
@@ -10,6 +10,10 @@ import java.util.concurrent.Executors
 import scala.concurrent.JavaConversions._
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+
+import pubsub.collection._
+import pubsub.command._
+import pubsub.network.TCPReader
 
 object Server extends App {
   val port = 7676

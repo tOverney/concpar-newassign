@@ -1,4 +1,4 @@
-package main.scala
+package pubsub.collection
 
 import scala.collection.mutable
 import java.util.concurrent.locks.ReentrantReadWriteLock

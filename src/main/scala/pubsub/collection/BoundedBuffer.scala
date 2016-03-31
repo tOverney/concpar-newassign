@@ -1,4 +1,6 @@
-package main.scala
+package pubsub.collection
+
+import instrumentation.Schedulable
 
 trait InternalBuffer[T] {
   def update(index: Int, elem: T): Unit
@@ -7,12 +9,11 @@ trait InternalBuffer[T] {
   val size: Int
 }
 
-trait ConcreteInternals[T] { self: BoundedBuffer[_] =>
+trait ConcreteInternals[T] { self: BoundedBuffer[T] =>
   override var head: Int = 0
   override var count: Int = 0
 
-
-  val buffer: InternalBuffer[T] = new InternalBuffer[T] {
+  override val buffer: InternalBuffer[T] = new InternalBuffer[T] {
     private val buffer: Array[Option[T]] = new Array(self.bufferSize)
     def update(index: Int, elem: T): Unit = buffer(index) = Some(elem)
     def apply(index: Int): T = buffer(index).get

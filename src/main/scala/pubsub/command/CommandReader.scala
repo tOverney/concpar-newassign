@@ -1,8 +1,10 @@
-package main.scala
+package pubsub.command
 
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.InputStream
+
+import pubsub.Client
 
 class CommandReader(inStream: InputStream, client: Client) {
   val inputBuffer = new BufferedReader(new InputStreamReader(inStream))

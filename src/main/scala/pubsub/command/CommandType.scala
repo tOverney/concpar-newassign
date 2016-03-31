@@ -1,4 +1,6 @@
-package main.scala
+package pubsub.command
+
+import pubsub.Client
 
 sealed trait Topic {
    val topic: String

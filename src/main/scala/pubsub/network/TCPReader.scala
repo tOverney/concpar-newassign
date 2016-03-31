@@ -1,6 +1,10 @@
-package main.scala
+package pubsub.network
 
 import java.net.Socket
+
+import pubsub.Client
+import pubsub.collection.BoundedBuffer
+import pubsub.command._
 
 class TCPReader(id: Int, socket: Socket, buffer: BoundedBuffer[Command]) {
   val client = new Client(socket, id)
