@@ -11,9 +11,11 @@ trait Schedulable {
   
   def notifyAll()(implicit i: Int) = notifyAllDefault()
   
+  private val lock = new AnyRef
+
   // Can be overriden.
-  def waitDefault(): Unit = wait()
-  def synchronizedDefault[T](toExecute: =>T): T = synchronized(toExecute)
-  def notifyDefault(): Unit = notify()
-  def notifyAllDefault(): Unit = notifyAll()
+  def waitDefault(): Unit = lock.wait()
+  def synchronizedDefault[T](toExecute: =>T): T = lock.synchronized(toExecute)
+  def notifyDefault(): Unit = lock.notify()
+  def notifyAllDefault(): Unit = lock.notifyAll()
 }
