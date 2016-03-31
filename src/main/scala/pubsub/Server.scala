@@ -30,7 +30,7 @@ object Server extends App {
       println("There is a problem with your internet connection, you can only access it via localhost")
   }
 
-  val buffer = new BoundedBuffer[Command](20) with ConcreteInternals[Command]
+  val buffer = new BoundedBuffer[Command](20)
   val commandHandlers = for{
     i <- 0 until maxWorkers
   } yield {

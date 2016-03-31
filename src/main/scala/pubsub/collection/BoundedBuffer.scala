@@ -9,37 +9,32 @@ trait InternalBuffer[T] {
   val size: Int
 }
 
-trait ConcreteInternals[T] { self: BoundedBuffer[T] =>
-  override var head: Int = 0
-  override var count: Int = 0
 
-  override val buffer: InternalBuffer[T] = new InternalBuffer[T] {
-    private val buffer: Array[Option[T]] = new Array(self.bufferSize)
+abstract class AbstractBoundedBuffer[T](bufferSize: Int) extends Schedulable {
+  require(bufferSize > 0)
+
+  def put(element: T): Unit
+  def take(): T
+
+  val buffer: InternalBuffer[T] = new InternalBuffer[T] {
+    private val buffer: Array[Option[T]] = new Array(bufferSize)
     def update(index: Int, elem: T): Unit = buffer(index) = Some(elem)
     def apply(index: Int): T = buffer(index).get
     def delete(index: Int): Unit = buffer(index) = None
-    val size = self.bufferSize
+    val size = bufferSize
   }
+
+  def head: Int = _head
+  def head_=(e: Int): Unit = _head = e
+  def count: Int = _count
+  def count_=(e: Int): Unit = _count = e
+
+  private var _head = 0;
+  private var _count = 0;
 }
 
-abstract class BoundedBuffer[T](size: Int) extends Schedulable {
-  require(size > 0)
+class BoundedBuffer[T](size: Int) extends AbstractBoundedBuffer[T](size) {
 
-  val bufferSize = size
-  val buffer: InternalBuffer[T]
-
-  // Emulate "var head, count: Int = 0"
-  def head: Int
-  def head_=(e: Int): Unit
-  def count: Int
-  def count_=(e: Int): Unit
-
-  /*def init() {
-    head = 0
-    count = 0
-  }*/
-
-  val lock = new AnyRef
 
   def putWrong1(e: T): Unit = {
     while (isFull) {      
@@ -102,7 +97,7 @@ abstract class BoundedBuffer[T](size: Int) extends Schedulable {
   }*/
 
   // Correct versions.
-  def put(e: T): Unit = {
+  override def put(e: T): Unit = {
     this.synchronized {
       while (isFull) {
         this.wait()
@@ -113,7 +108,7 @@ abstract class BoundedBuffer[T](size: Int) extends Schedulable {
     }
   }
 
-  def take(): T = {
+  override def take(): T = {
     this.synchronized {
       while (isEmpty) {
         this.wait()

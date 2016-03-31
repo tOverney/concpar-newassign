@@ -311,7 +311,7 @@ class SchedulableInternalBuffer[T](val size: Int, scheduler: Scheduler) extends 
 }
 
 trait MockedInternals[T] { self: SchedulableBoundedBuffer[T] =>
-  override val buffer = new SchedulableInternalBuffer[T](self.bufferSize, self.scheduler)
+  override val buffer = new SchedulableInternalBuffer[T](self.size, self.scheduler)
 
   var h: Int = 0
   var c: Int = 0
@@ -333,7 +333,7 @@ trait MockedInternals[T] { self: SchedulableBoundedBuffer[T] =>
   override def count: Int = scheduler.exec { c }(s"Read  count -> $c")
 }
 
-class SchedulableBoundedBuffer[T](size: Int, val scheduler: Scheduler)
+class SchedulableBoundedBuffer[T](val size: Int, val scheduler: Scheduler)
   extends BoundedBuffer[T](size) with MockedSchedulable with MockedInternals[T] {
 
 }
