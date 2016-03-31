@@ -20,5 +20,37 @@ This exercise is composed of two parts:
 
 ## First part
 
+The initial code you are given is a correct implementation of the bounded buffer datatype, assuming a non-concurrent setting.
+
+```scala
+class BoundedBuffer[T](size: Int) extends AbstractBoundedBuffer[T](size) {
+
+  override def put(e: T): Unit = {
+    if (isFull) {
+      throw new Exception("Buffer is full!")
+    }
+    buffer(tail) = e
+    count += 1
+  }
+
+  override def take(): T = {
+    if (isEmpty) {
+      throw new Exception("Buffer is empty!")
+    }
+    val ret = buffer(head)
+    buffer.delete(head)
+    head = (head + 1) % size
+    count -= 1
+    ret
+  }
+
+  def tail: Int = (head + count) % size
+  def isFull: Boolean = count == size
+  def isEmpty: Boolean = count == 0
+}
+```
+
+What can go wrong with this solution?
+
 ## Second part
 
