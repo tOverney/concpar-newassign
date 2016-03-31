@@ -2,7 +2,7 @@
 
 The goal of this assignment is to create a concurrent bounded buffer for use in a PubSub server.
 
-The concurrent bounded buffer is a data structure that supports the following two operations:
+A concurrent bounded buffer is a simple data structure that supports the following two operations:
 - `put` a value in the buffer,
 - `take` a value from the buffer.
 
@@ -12,4 +12,13 @@ The buffer is *bounded*, which means that it can only contain a finite number of
 
 Since this buffer is of finite size, some operations may not be possible depending on the state of the buffer.
 If the buffer contains no element, then `take` is not currently possible. Likewise, `put` is not possible when the buffer is full.
-When an operation is not possible, the thread should `wait` on the object until the state of the `BoundedBuffer` permits the operation to be carried on.
+When an operation is not possible, the thread should wait until the state of the `BoundedBuffer` permits the operation to be carried on.
+
+This exercise is composed of two parts:
+- In the first part, we will present you different implementations of the `put` and `take` methods, all presenting some concurrency issues. Your goal will be to understand the issues with the solutions.
+- In the second part, you will have to come up with a correct implementation of the `put` and `take` methods.
+
+## First part
+
+## Second part
+
