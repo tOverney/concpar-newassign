@@ -62,7 +62,7 @@ A schedule is a sequence of operations carried out by the different threads. The
 
 The test suite of the project should help you find problematic schedules. Try to understand what went wrong with them.
 
-[comment]: # Should we talk about the memory model here?
+[comment]: # (Should we talk about the memory model here?)
 
 ### Busy waiting
 
